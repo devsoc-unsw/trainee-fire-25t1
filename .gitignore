@@ -1,0 +1,20 @@
+# Node
+node_modules/
+npm-debug.log
+.env
+
+# React
+frontend/build/
+frontend/node_modules/
+
+# OS
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# IDEs
+.vscode/
+.idea/
+

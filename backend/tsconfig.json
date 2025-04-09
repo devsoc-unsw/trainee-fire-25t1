@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "module": "NodeNext",
+        "noImplicitAny": true,
+        "noEmit": true,
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "esModuleInterop": true,
+        "allowImportingTsExtensions": true,
+        "target": "ES2020",
+    },
+    "include": ["src/**/*.ts"]
+}
