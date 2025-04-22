@@ -50,4 +50,4 @@ export async function authRegister(
 }
 
 
-authRegister('ben', 'godwin').catch(console.dir);
+authRegister('ben', 'password').catch(console.dir);
