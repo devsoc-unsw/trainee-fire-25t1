@@ -18,14 +18,15 @@ app.listen(PORT, () => {
 });
 
 app.post('/user/login', (req: Request, res: Response) => {
-    const username = req.body.user;
+    const username = req.body.username;
     const password = req.body.password;
-    const user = { name: username };
     // User Authentication Here!!
+    const userId = "insertuserIdHere!";
 
-    const accessToken = generateAccessToken(username);
-    const refreshToken = generateRefreshToken(username);
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken(userId);
     // Add refresh token to db!
+    res.json({accessToken: accessToken, refreshToken: refreshToken});
 });
 
 app.post('/user/logout', (req: Request, res: Response) => {
@@ -33,53 +34,49 @@ app.post('/user/logout', (req: Request, res: Response) => {
     // Remove refresh token from db! 
 });
 
-// Get new access token
-app.post('/token', (req: Request, res: Response) => {
-    const tokenToRemove = req.body.token;
-    // Remove refresh token from db! 
-
-    const refreshToken = req.body.token;
-    // if (refreshToken == null) return res.sendStatus(401);
-    // If refresh token not in db: return res.sendStatus(403);
-
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err: Error, user: User) => {
-        if (err) return res.sendStatus(403);
-        const accessToken = generateAccessToken(user);
-        res.json({ accessToken: accessToken });
-    });
-});
-
-// Verify access token middleware
+// Auth middleware
 function verifyJWT(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.sendStatus(401);
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.sendStatus(401);
 
-    const token = authHeader.split(' ')[1];
+  // Access token
+  const accessToken = authHeader.split(' ')[1];
+  const refreshToken = req.body.refreshToken;
 
-    jwt.verify(
-        token,
-        process.env.ACCESS_TOKEN_SECRET,
-        (err: Error, user: User) => {
-            if (err) return res.sendStatus(403);
-            // req.body.user = user.username; --> why?
-            next();
-        }
-    );
+  // First verify access token
+  jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET,
+      (err: Error, userId: string) => {
+          if (err) {
+            // Verify refresh token
+            jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err: Error, userId: string) => {
+              if (err) return res.sendStatus(403);
+
+              const newToken = generateAccessToken(userId);
+              // How to set new access token on user side??
+            });
+          }
+          req.body.userId = userId;
+          next();
+      }
+  );
+  next();
 }
 
 // Helper Functions
-const generateAccessToken = (user: User) => {
+const generateAccessToken = (userId: string) => {
     return jwt.sign(
-        user,
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '15m' }
+      { userId: userId },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '15m' }
     );
 }
 
-const generateRefreshToken = (user: User) => {
+const generateRefreshToken = (userId: string) => {
     return jwt.sign(
-        user,
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: '1d' }
+      { userId: userId },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '1d' }
     );
 }
