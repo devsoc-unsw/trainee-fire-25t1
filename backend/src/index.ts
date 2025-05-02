@@ -1,70 +1,80 @@
 import express,{ json, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
-import { User } from './types';
-
-dotenv.config();
+dotenv.config({ path: "src/.env" });
 const app = express();
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-app.post('/user/login', (req: Request, res: Response) => {
-    const username = req.body.username;
-    const password = req.body.password;
-    // User Authentication Here!!
-    const userId = "insertuserIdHere!";
+app.post('/auth/login', (req: Request, res: Response) => {
+    // !!User Authentication Here!!
+    const userId = req.body.message;
 
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
-    // Add refresh token to db!
-    res.json({accessToken: accessToken, refreshToken: refreshToken});
-});
 
-app.post('/user/logout', (req: Request, res: Response) => {
-   const tokenToRemove = req.body.token;
-    // Remove refresh token from db! 
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.json({ accessToken: accessToken });
 });
 
 // Auth middleware
 function verifyJWT(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
-  if (!authHeader) return res.sendStatus(401);
 
-  // Access token
+  if (!authHeader) {
+    res.status(401).json({ error: "No access token given" });
+    return;
+  }
+
   const accessToken = authHeader.split(' ')[1];
-  const refreshToken = req.body.refreshToken;
+  const refreshToken = req.cookies.refreshToken;
 
   // First verify access token
-  jwt.verify(
+  try {
+    jwt.verify(
       accessToken,
       process.env.ACCESS_TOKEN_SECRET,
       (err: Error, userId: string) => {
-          if (err) {
+        if (err) {
+          try {
             // Verify refresh token
             jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err: Error, userId: string) => {
-              if (err) return res.sendStatus(403);
-
-              const newToken = generateAccessToken(userId);
-              // How to set new access token on user side??
+              if (err) {
+                const errorMessage = "Invalid refresh token";
+                throw new Error(errorMessage);
+              } else {
+                const newToken = generateAccessToken(userId);
+                res.set('accessToken', newToken);
+                return;
+              }
             });
+          } catch (Error) {
+            throw Error;
           }
+        } else {
           req.body.userId = userId;
-          next();
+        }
       }
-  );
+    );
+  } catch (Error) {
+    return;
+  }
   next();
 }
 
-// Helper Functions
+// Auth Helper Functions
 const generateAccessToken = (userId: string) => {
     return jwt.sign(
       { userId: userId },
@@ -77,6 +87,12 @@ const generateRefreshToken = (userId: string) => {
     return jwt.sign(
       { userId: userId },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: '7d' }
     );
 }
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
