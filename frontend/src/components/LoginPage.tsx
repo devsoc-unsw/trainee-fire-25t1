@@ -15,12 +15,12 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   const handleLogin = () => {
-    navigate("/home")
+    navigate("/profile")
 
-    // if (!username || !password) {
-    //   setError("Username and password are required.")
-    //   return
-    // }
+    if (!username || !password) {
+      setError("Username and password are required.")
+      return
+    }
 
     setError("")
     console.log("Logging in:", { username, password })
