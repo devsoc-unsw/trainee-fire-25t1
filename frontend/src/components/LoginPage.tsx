@@ -1,10 +1,15 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import logo from "../assets/jukeboxd.svg"
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import logo from "../assets/jukeboxd.svg"
+
+import { useRef } from "react"
+
+import axios from "axios";
+const backend = import.meta.env.VITE_BACKEND_URL;
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login")
@@ -12,42 +17,66 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
+
+  const usernameRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const confirmRef = useRef<HTMLInputElement>(null)
+
   const navigate = useNavigate()
 
-  const handleLogin = () => {
-    navigate("/profile")
-
+  const handleLogin = async () => {
     if (!username || !password) {
-      setError("Username and password are required.")
-      return
+      setError("Username and password are required.");
+      return;
     }
+  
+    try {
+      const res = await axios.post(`${backend}/auth/login`, {
+        username,
+        password,
+      }, { withCredentials: true });
+  
+      const accessToken = res.data.accessToken;
+      localStorage.setItem("accessToken", accessToken);
+      setError("");
+      navigate("/profile");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Login failed");
+    }
+  };  
 
-    setError("")
-    console.log("Logging in:", { username, password })
-    // TODO: Login logic
-  }
-
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!username || !password || !confirmPassword) {
-      setError("All fields are required.")
-      return
+      setError("All fields are required.");
+      return;
     }
-
+  
     if (password !== confirmPassword) {
-      setError("Passwords do not match.")
-      return
+      setError("Passwords do not match.");
+      return;
     }
-
-    setError("")
-    console.log("Registering:", { username, password, confirmPassword })
-    // TODO: Register logic
-  }
+  
+    try {
+      const res = await axios.post(`${backend}/auth/register`, {
+        username,
+        password,
+      }, { withCredentials: true });
+  
+      const accessToken = res.data.accessToken;
+      localStorage.setItem("accessToken", accessToken);
+      setError("");
+      navigate("/profile");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Registration failed");
+    }
+  };
 
   const LoginForm = (
     <>
       <div>
         <Label htmlFor="username" className="pb-1">Username</Label>
         <Input
+          ref={usernameRef}
           id="username"
           placeholder="Username"
           value={username}
@@ -55,12 +84,16 @@ export default function LoginPage() {
             setUsername(e.target.value);
             setError("");
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") passwordRef.current?.focus();
+          }}
         />
       </div>
 
       <div>
         <Label htmlFor="password" className="pb-1">Password</Label>
         <Input
+          ref={passwordRef}
           id="password"
           type="password"
           placeholder="Password"
@@ -68,6 +101,9 @@ export default function LoginPage() {
           onChange={(e) => {
             setPassword(e.target.value);
             setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleLogin();
           }}
         />
       </div>
@@ -103,6 +139,7 @@ export default function LoginPage() {
       <div>
         <Label htmlFor="username" className="pb-1">Username</Label>
         <Input
+          ref={usernameRef}
           id="username"
           placeholder="Username"
           value={username}
@@ -110,12 +147,16 @@ export default function LoginPage() {
             setUsername(e.target.value);
             setError("");
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") passwordRef.current?.focus();
+          }}
         />
       </div>
 
       <div>
         <Label htmlFor="password" className="pb-1">Password</Label>
         <Input
+          ref={passwordRef}
           id="password"
           type="password"
           placeholder="Password"
@@ -124,12 +165,16 @@ export default function LoginPage() {
             setPassword(e.target.value);
             setError("");
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") confirmRef.current?.focus();
+          }}
         />
       </div>
 
       <div>
         <Label htmlFor="confirmPassword" className="pb-1">Confirm Password</Label>
         <Input
+          ref={confirmRef}
           id="confirmPassword"
           type="password"
           placeholder="Password"
@@ -137,6 +182,9 @@ export default function LoginPage() {
           onChange={(e) => {
             setConfirmPassword(e.target.value);
             setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleRegister();
           }}
         />
       </div>

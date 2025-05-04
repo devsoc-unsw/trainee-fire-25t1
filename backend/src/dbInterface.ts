@@ -1,4 +1,3 @@
-
 const { MongoClient, ServerApiVersion } = require('mongodb');
 import dotenv from "dotenv";
 import { Review, User } from './types.ts'
