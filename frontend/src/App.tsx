@@ -1,29 +1,17 @@
-import { useState } from 'react'
-import logo from './assets/jukeboxd.svg'
+import LoginPage from "./components/LoginPage.tsx"
+import HomePage from './components/HomePage.tsx'
+import Profile from './components/ProfilePage.tsx'
 import './App.css'
+import { Routes, Route } from 'react-router-dom'
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <img src={logo} className="logo" alt="Vite logo" />
-      </div>
-      <h1>JUKEBOXD!</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  return <div className="w-screen h-screen">
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/home" element={<Profile />} />
+    </Routes>
+  </div>
 }
 
 export default App
