@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
+import { addReview, getReviews } from './review';
+
 
 import dotenv from 'dotenv';
 dotenv.config({ path: "./.env" });
@@ -23,8 +25,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Our beautiful temporary database
-const users: { [username: string]: { password: string } } = {};
-
+const users: { [username: string]: { password: string,  } } = {};
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
@@ -78,8 +79,38 @@ app.post('/auth/register', async (req: Request, res: Response): Promise<any> => 
   res.status(201).json({ accessToken });
 });
 
+// verifyJWT should check tokens and pass userId to req??? - not sure
+app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  // Obtain userId or username from verifyJWT
+  const userId = req.body.userId; 
+  const { review } = req.body;
+  if (!review) {
+    return res.status(400).json({ error: "No review detected." });
+  }
+  try {
+    
+    return res.status(201).json({ status: "success" });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while adding reviews" });
+  }
+});
+
+
+app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = req.params.user as string; 
+  try {
+    // retrieve 10 most recent reviews left by friends of the user. 
+    
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving reviews" });
+  }
+});
+
+
 // Auth middleware
-function verifyJWT(req: Request, res: Response, next: NextFunction) {
+function verifyJWT(req: Request, res: Response, next: NextFunction) :any {
   const authHeader = req.headers['authorization'];
   const refreshToken = req.cookies.refreshToken;
 
