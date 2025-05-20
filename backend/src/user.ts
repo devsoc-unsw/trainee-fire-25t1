@@ -26,7 +26,6 @@ export async function registerUser(username: string, password: string) {
 
 export async function authenticateUser(username: string, password: string) {
     const foundUser = await usersCollection.findOne( {username: username} );
-    console.log(foundUser);
     if (!foundUser) {
         throw new Error ("No user with this name");
     }

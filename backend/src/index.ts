@@ -133,7 +133,6 @@ function verifyJWT(req: Request, res: Response, next: NextFunction) :any {
     res.locals.user = payload.userId;
     next();
   } catch (err) {
-    console.log(err)
     try {
       const refreshPayload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET) as { userId: string };
       const newToken = generateAccessToken(refreshPayload.userId);
