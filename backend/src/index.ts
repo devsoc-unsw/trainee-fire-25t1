@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import bcrypt from 'bcryptjs';
 import { addReview, getReviews } from './review';
-
+import { registerUser, authenticateUser } from './user';
+import { Review, User, Album } from './types';
 
 import dotenv from 'dotenv';
 dotenv.config({ path: "./.env" });
@@ -18,25 +18,22 @@ app.use(cors({
 
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
+import { register } from 'module';
 const swaggerDocument = YAML.load('openapi.yaml');
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.json());
 app.use(cookieParser());
 
-// Our beautiful temporary database
-const users: { [username: string]: { password: string,  } } = {};
-app.get('/ping', (req, res) => {
-  res.send('pong');
-});
-
 app.post('/auth/login', async (req: Request, res: Response): Promise<any> => {
   // !!User Authentication Here!!
   const { username, password } = req.body;
 
-  const user = users[username];
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  try {
+    authenticateUser(username, password)
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: e });
   }
 
   const accessToken = generateAccessToken(username);
@@ -59,12 +56,11 @@ app.post('/auth/register', async (req: Request, res: Response): Promise<any> => 
     return res.status(400).json({ error: "Username and password are required" });
   }
 
-  if (users[username]) {
-    return res.status(409).json({ error: "User already exists" });
+  try {
+    registerUser(username, password)
+  } catch (e: any) {
+    return res.status(403).json({ error: e });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  users[username] = { password: hashedPassword };
 
   const accessToken = generateAccessToken(username);
   const refreshToken = generateRefreshToken(username);
@@ -82,13 +78,13 @@ app.post('/auth/register', async (req: Request, res: Response): Promise<any> => 
 // verifyJWT should check tokens and pass userId to req??? - not sure
 app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   // Obtain userId or username from verifyJWT
-  const userId = req.body.userId; 
+  const userId = req.body.userId;
   const { review } = req.body;
   if (!review) {
     return res.status(400).json({ error: "No review detected." });
   }
   try {
-    
+
     return res.status(201).json({ status: "success" });
   }
   catch (e: any) {
@@ -98,10 +94,10 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
 
 
 app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
-  const userId = req.params.user as string; 
+  const userId = req.params.user as string;
   try {
-    // retrieve 10 most recent reviews left by friends of the user. 
-    
+    // retrieve 10 most recent reviews left by friends of the user.
+
   }
   catch (e: any) {
     return res.status(403).json({ error: "Errors occur while retrieving reviews" });

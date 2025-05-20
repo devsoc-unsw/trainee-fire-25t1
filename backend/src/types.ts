@@ -5,21 +5,20 @@ export interface User {
     username: string;
     password: string;
     topAlbums: [Album];
-    reviews: [ObjectId]; 
+    reviews: [ObjectId];
     friends: [string]; //list of userIds
-
 };
 
 export interface Album {
-    name: string; 
-    artist: string; 
-    coverImage?: string;  
+    name: string;
+    artist: string;
+    coverImage?: string;
 }
 
 export interface Review {
     _id: ObjectId;
-    ownerId: string; 
+    ownerId: string;
     album: Album;
-    rating: string; 
-    creationDate: number; 
+    rating: string;
+    creationDate: number;
 };
