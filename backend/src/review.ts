@@ -4,7 +4,7 @@ import { Review } from './types';
 
 export async function addReview(userId: string, review: Review ) {
 
-    const foundUser = usersCollection.findOne( {username: userId});
+    const foundUser = await usersCollection.findOne( {username: userId});
     if (!foundUser) {
         throw new Error ("No user with this userId");
     }
@@ -22,7 +22,9 @@ export async function addReview(userId: string, review: Review ) {
         { _id: foundUser._id},
         { $push: {reviews: res.insertedId}}
     )
+
 }
+
 
 
 export async function getReviews(userId: string ) {
