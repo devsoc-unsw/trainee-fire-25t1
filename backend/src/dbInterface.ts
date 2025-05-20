@@ -10,11 +10,12 @@ const client = new MongoClient(uri!, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors: true,
+    deprecationErrors: true, 
   }
 });
 const db = client.db("jukeboxd");
-const usersCollection = db.collection('users');
+export const usersCollection = db.collection('users');
+export const reviewsCollection = db.collection('reviews');
 
 async function run() {
   try {
@@ -40,7 +41,7 @@ export async function authRegister(
       username: username,
       password: password,
       topAlbums: [],
-      reviews: [],
+      reviews: [],    
       friends: []
     });  // insert data in collection
   } catch (error) {
@@ -50,3 +51,5 @@ export async function authRegister(
 
 
 authRegister('ben', 'password').catch(console.dir);
+
+
