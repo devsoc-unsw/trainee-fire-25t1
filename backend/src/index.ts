@@ -19,6 +19,7 @@ app.use(cors({
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { register } from 'module';
+import { ObjectId } from 'mongodb';
 const swaggerDocument = YAML.load('openapi.yaml');
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -30,7 +31,7 @@ app.post('/auth/login', async (req: Request, res: Response): Promise<any> => {
   const { username, password } = req.body;
 
   try {
-    authenticateUser(username, password)
+    await authenticateUser(username, password)
   }
   catch (e: any) {
     return res.status(403).json({ error: e });
@@ -57,7 +58,7 @@ app.post('/auth/register', async (req: Request, res: Response): Promise<any> => 
   }
 
   try {
-    registerUser(username, password)
+    await registerUser(username, password)
   } catch (e: any) {
     return res.status(403).json({ error: e });
   }
@@ -78,17 +79,27 @@ app.post('/auth/register', async (req: Request, res: Response): Promise<any> => 
 // verifyJWT should check tokens and pass userId to req??? - not sure
 app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   // Obtain userId or username from verifyJWT
-  const userId = req.body.userId;
-  const { review } = req.body;
-  if (!review) {
-    return res.status(400).json({ error: "No review detected." });
+  const userId = res.locals.user;
+  // const review = req.body;
+  // if (!review) {
+  //   return res.status(400).json({ error: "No review detected." });
+  // }
+  const review : Review = {
+    _id: new ObjectId(),
+    ownerId: userId,
+    album: {
+      name: req.body.album,
+      artist: req.body.artist,
+    },
+    rating: req.body.rating,
+    creationDate: Date.now()
   }
   try {
-
-    return res.status(201).json({ status: "success" });
+    await addReview(userId, review)
+    return res.status(200).json({ message: "Review added successfully" });
   }
   catch (e: any) {
-    return res.status(403).json({ error: "Errors occur while adding reviews" });
+    return res.status(403).json({ error: "Error occured while adding review" });
   }
 });
 
@@ -97,7 +108,8 @@ app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): P
   const userId = req.params.user as string;
   try {
     // retrieve 10 most recent reviews left by friends of the user.
-
+    const reviews = await getReviews(userId)
+    return res.status(200).json({ reviews: reviews });
   }
   catch (e: any) {
     return res.status(403).json({ error: "Errors occur while retrieving reviews" });
@@ -118,9 +130,10 @@ function verifyJWT(req: Request, res: Response, next: NextFunction) :any {
 
   try {
     const payload = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET) as { userId: string };
-    req.body.userId = payload.userId;
-    return next();
+    res.locals.user = payload.userId;
+    next();
   } catch (err) {
+    console.log(err)
     try {
       const refreshPayload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET) as { userId: string };
       const newToken = generateAccessToken(refreshPayload.userId);
