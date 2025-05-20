@@ -9,19 +9,19 @@ export async function addReview(userId: string, review: Review ) {
         throw new Error ("No user with this userId");
     }
 
-    // // Insert review document
-    // const res = await reviewsCollection.insertOne({
-    //     ownerId: userId,
-    //     album: review.album,
-    //     rating: review.rating,
-    //     creationDate: Date.now()
-    // })
+    // Insert review document
+    const res = await reviewsCollection.insertOne({
+        ownerId: userId,
+        album: review.album,
+        rating: review.rating,
+        creationDate: Date.now()
+    })
 
-    // // Append objectId into the reviews array in the user object
-    // await usersCollection.updateOne(
-    //     { _id: foundUser._id},
-    //     { $push: {reviews: res.insertedId}}
-    // )
+    // Append objectId into the reviews array in the user object
+    await usersCollection.updateOne(
+        { _id: foundUser._id},
+        { $push: {reviews: res.insertedId}}
+    )
 }
 
 
