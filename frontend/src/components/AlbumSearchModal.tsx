@@ -78,8 +78,8 @@ export function AlbumSearchModal({ onSelectAlbum, trigger }: AlbumSearchModalPro
         <DialogTrigger asChild>
           {trigger || (
             <Button variant="outline" className="gap-2">
-              <Search className="h-4 w-4" />
-              <span>Search Albums</span>
+              <Plus className="h-4 w-4" />
+              <span>Add Review</span>
             </Button>
           )}
         </DialogTrigger>
