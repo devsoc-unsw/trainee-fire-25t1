@@ -29,7 +29,7 @@ export async function getFriends (userId: string): Promise<Array<string>> {
         throw new Error ("User with this name does not exist");
     }
     
-    const friendList = foundUser.friend; 
+    const friendList = foundUser.friends; 
 
     return friendList; 
 }

@@ -119,18 +119,6 @@ app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): P
 
 
 
-app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
-  const userId = req.params.user as string;
-  try {
-    // retrieve 10 most recent reviews left by friends of the user.
-    const reviews = await getReviews(userId)
-    return res.status(200).json({ reviews: reviews });
-  }
-  catch (e: any) {
-    return res.status(403).json({ error: "Errors occur while retrieving reviews" });
-  }
-});
-
 //Add a friend (following someone, to be exact)
 app.post('/user/friends/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   // Obtain userId or username from verifyJWT
@@ -151,8 +139,8 @@ app.post('/user/friends/add', verifyJWT, async (req: Request, res: Response): Pr
 });
 
 //Get a list of friends
-app.get('users/friends/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
-  const userId = req.params.user as string;
+app.get('/user/friends/list', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user;
   try {
     const friendList = await getFriends(userId); 
     return res.status(200).json({ friendList: friendList});
