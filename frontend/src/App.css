@@ -5,7 +5,7 @@
   max-width: 1280px;
   margin: 0 auto;
   /* padding: 2rem; */
-  text-align: center;
+  text-align: left;
 }
 
 .logo {
@@ -28,6 +28,7 @@
 .read-the-docs {
   color: #888;
 }
+
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -118,7 +119,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.488 0.243 264.376);

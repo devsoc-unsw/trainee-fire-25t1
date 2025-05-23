@@ -29,13 +29,14 @@ export default function LoginPage() {
       setError("Username and password are required.");
       return;
     }
-  
+
     try {
+      console.log(backend)
       const res = await axios.post(`${backend}/auth/login`, {
         username,
         password,
       }, { withCredentials: true });
-  
+
       const accessToken = res.data.accessToken;
       localStorage.setItem("accessToken", accessToken);
       setError("");
@@ -43,25 +44,25 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed");
     }
-  };  
+  };
 
   const handleRegister = async () => {
     if (!username || !password || !confirmPassword) {
       setError("All fields are required.");
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
-  
+
     try {
       const res = await axios.post(`${backend}/auth/register`, {
         username,
         password,
       }, { withCredentials: true });
-  
+
       const accessToken = res.data.accessToken;
       localStorage.setItem("accessToken", accessToken);
       setError("");
