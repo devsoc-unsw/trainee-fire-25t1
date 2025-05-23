@@ -23,7 +23,6 @@ export async function registerUser(username: string, password: string) {
 
 }
 
-
 export async function authenticateUser(username: string, password: string) {
     const foundUser = await usersCollection.findOne( {username: username} );
     if (!foundUser) {
@@ -33,4 +32,12 @@ export async function authenticateUser(username: string, password: string) {
     if (!(await bcrypt.compare(password, foundUser.password))) {
         throw new Error ("Invalid password");
     }
+}
+
+export async function getUserInfo(username: string) {
+    const foundUser = await usersCollection.findOne( {username: username} );
+    if (!foundUser) {
+        throw new Error ("No user with this name");
+    }
+    return foundUser
 }

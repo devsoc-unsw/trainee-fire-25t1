@@ -10,6 +10,9 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useState } from "react";
 
+import axios from "axios";
+const backend = import.meta.env.VITE_BACKEND_URL;
+
 export default function ProfilePage() {
   const params = useParams();
   const username = params.username;

@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import { addReview, getReviews } from './review';
-import { registerUser, authenticateUser } from './user';
+import { registerUser, authenticateUser, getUserInfo } from './user';
 import { Review, User, Album } from './types';
 
 import dotenv from 'dotenv';
@@ -104,7 +104,7 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
 });
 
 
-app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+app.get('/user/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   const userId = req.params.user as string;
   try {
     // retrieve 10 most recent reviews left by friends of the user.
@@ -116,6 +116,23 @@ app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): P
   }
 });
 
+app.get("/user/:user", verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = req.params.user as string;
+  const loggedIn = res.locals.user as string;
+  try {
+    const user = await getUserInfo(userId)
+    return res.status(200).json({
+      username: user.username,
+      loggedIn: userId === loggedIn,
+      topAlbums: user.friends,
+      reviews: user.reviews,
+      friends: user.friends,
+    });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving reviews" });
+  }
+})
 
 // Auth middleware
 function verifyJWT(req: Request, res: Response, next: NextFunction) :any {
