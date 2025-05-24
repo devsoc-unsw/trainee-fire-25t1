@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import { addReview, getReviews } from './review';
+import { addReview, getFriendsReviews, getMyReviews } from './review';
 import { registerUser, authenticateUser, getUserInfo } from './user';
 import { Review, User, Album } from './types';
 
@@ -90,6 +90,7 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
     album: {
       name: req.body.album,
       artist: req.body.artist,
+      coverImage: req.body.coverImage
     },
     rating: req.body.rating,
     creationDate: Date.now()
@@ -104,11 +105,11 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
 });
 
 
-app.get('/user/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
-  const userId = req.params.user as string;
+app.get('/friends/reviews/', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user as string;
   try {
     // retrieve 10 most recent reviews left by friends of the user.
-    const reviews = await getReviews(userId)
+    const reviews = await getFriendsReviews(userId)
     return res.status(200).json({ reviews: reviews });
   }
   catch (e: any) {
@@ -116,14 +117,45 @@ app.get('/user/reviews/:user', verifyJWT, async (req: Request, res: Response): P
   }
 });
 
-app.get("/user/:user", verifyJWT, async (req: Request, res: Response): Promise<any> => {
+app.get('/user/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   const userId = req.params.user as string;
+  try {
+    const reviews = await getMyReviews(userId)
+    console.log(reviews)
+    return res.status(200).json({ reviews: reviews });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: e.message });
+  }
+});
+
+app.get("/user/:user", verifyJWT, async (req: Request, res: Response): Promise<any> => {
   const loggedIn = res.locals.user as string;
+  const userId = req.params.user !== undefined ? (req.params.user as string) : loggedIn;
+  console.log("user id is" + userId);
   try {
     const user = await getUserInfo(userId)
     return res.status(200).json({
       username: user.username,
       loggedIn: userId === loggedIn,
+      topAlbums: user.friends,
+      reviews: user.reviews,
+      friends: user.friends,
+    });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving reviews" });
+  }
+})
+
+app.get("/user/", verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user as string;
+  console.log("user id is" + userId);
+  try {
+    const user = await getUserInfo(userId)
+    return res.status(200).json({
+      username: user.username,
+      loggedIn: true,
       topAlbums: user.friends,
       reviews: user.reviews,
       friends: user.friends,

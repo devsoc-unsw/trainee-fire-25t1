@@ -40,7 +40,7 @@ export default function LoginPage() {
       const accessToken = res.data.accessToken;
       localStorage.setItem("accessToken", accessToken);
       setError("");
-      navigate("/profile");
+      navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed");
     }

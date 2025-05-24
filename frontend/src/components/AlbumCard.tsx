@@ -12,10 +12,16 @@ interface AlbumCardProps {
 
 export function AlbumCard({ title, artist, cover, rating, reviewer }: AlbumCardProps) {
   return (
-    <Card className="overflow-hidden border-transparent">
+    <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border-transparent">
+      {/* Top Image Cover */}
       <div className="relative aspect-square">
-        <img src={cover || "/placeholder.svg"} alt={`${title} by ${artist}`} className="object-cover" />
+        <img
+          src={cover || "/placeholder.svg"}
+          alt={`${title} by ${artist}`}
+          className="w-full h-full object-cover"
+        />
       </div>
+
       <CardContent className="p-3">
         <h3 className="font-medium truncate" title={title}>
           {title}
@@ -23,18 +29,20 @@ export function AlbumCard({ title, artist, cover, rating, reviewer }: AlbumCardP
         <p className="text-sm text-muted-foreground truncate" title={artist}>
           {artist}
         </p>
+
         {rating !== null && (
           <div className="flex items-center mt-1">
             <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="ml-1 text-sm">{rating.toFixed(1)}</span>
           </div>
         )}
+
         {reviewer && (
           <div className="flex items-center mt-2 pt-2 border-t border-border/50">
-            reviewer
+            {reviewer}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,46 +1,48 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AlbumCard } from "@/components/AlbumCard"
-import { AlbumSearchModal } from "@/components/AlbumSearchModal"
-import { Plus, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getUserInfo } from "@/api/user"
+import { useEffect } from "react"
+import { useState } from "react"
+import { Review, User } from "@/types"
+import { getFriendsReviews } from "@/api/reviews"
 
 export default function HomePage() {
+  const [user, setUser] = useState<User>()
+  const [reviews, setReviews] = useState<Array<Review>>([])
+
+  useEffect(() => {
+    getUserInfo()
+    .then(setUser)
+    .then(() => getFriendsReviews())
+    .then(setReviews)
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
         <div className="grid gap-6">
+          <div className="flex items-center justify-between align-center">
+            <h1 className="text-xl font-semibold">Welcome to Jukeboxd {user ? user.username : ""}</h1>
+          </div>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Friends' Recent Ratings</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <AlbumCard
-              title="The Dark Side of the Moon"
-              artist="Pink Floyd"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={5}
-            />
-            <AlbumCard
-              title="To Pimp a Butterfly"
-              artist="Kendrick Lamar"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={4.5}
-            />
-            <AlbumCard
-              title="In Rainbows"
-              artist="Radiohead"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={4}
-            />
-            <AlbumCard title="Blonde" artist="Frank Ocean" cover="/placeholder.svg?height=150&width=150" rating={4.5} />
-            <AlbumCard title="Currents" artist="Tame Impala" cover="/placeholder.svg?height=150&width=150" rating={4} />
-            <AlbumCard
-              title="OK Computer"
-              artist="Radiohead"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={5}
-            />
+          {
+                reviews.map(review =>
+                  <AlbumCard
+                    title={review.album.name}
+                    artist={review.album.artist}
+                    cover={review.album.coverImage ? review.album.coverImage : ""}
+                    rating={Number(review.rating)}
+                    reviewer={review.ownerId}
+                  />
+                )
+              }
           </div>
 
           <h2 className="text-xl font-semibold mt-6">Friends</h2>

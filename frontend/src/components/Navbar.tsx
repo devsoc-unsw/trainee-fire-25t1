@@ -13,10 +13,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import logo from "@/assets/jukeboxd.svg"
+import { getUserInfo } from "@/api/user"
+import { User as UserType } from "@/types"
 
 export function Navbar() {
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const searchRef = useRef<HTMLDivElement>(null)
+
+    const [user, setUser] = useState<UserType>()
+      useEffect(() => {
+        getUserInfo()
+        .then(setUser)
+      }, []);
 
     // Close search dropdown when clicking outside
     useEffect(() => {
@@ -89,7 +97,7 @@ export function Navbar() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuItem asChild>
-                            <a href="/profile" className="flex items-center gap-2 cursor-pointer">
+                            <a href={"/profile/" + user?.username} className="flex items-center gap-2 cursor-pointer">
                                 <User className="h-4 w-4" />
                                 <span>Your Profile</span>
                             </a>

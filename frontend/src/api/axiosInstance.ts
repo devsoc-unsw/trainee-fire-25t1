@@ -12,10 +12,10 @@ const axiosInstance = axios.create({
   },
 });
 
-// 🔐 Automatically add Bearer token if available
+// Automatically add Bearer token if available
 axiosInstance.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem('authToken'); // or sessionStorage
+      const token = localStorage.getItem('accessToken'); // or sessionStorage
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
