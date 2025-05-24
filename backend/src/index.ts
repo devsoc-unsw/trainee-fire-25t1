@@ -20,6 +20,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { register } from 'module';
 import { ObjectId } from 'mongodb';
+import { addFriend, getFriends } from './friends';
 const swaggerDocument = YAML.load('openapi.yaml');
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -115,6 +116,40 @@ app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): P
     return res.status(403).json({ error: "Errors occur while retrieving reviews" });
   }
 });
+
+
+
+//Add a friend (following someone, to be exact)
+app.post('/user/friends/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  // Obtain userId or username from verifyJWT
+  const userId = res.locals.user;
+  
+
+  // Do not see inputs route list (google doc); assume the 'friend' Id added is from req.body 
+  const friendId = req.body.friendId;
+  try {
+    addFriend(userId, friendId); 
+    return res.status(200).json({
+         message: "Friend added successfully"
+    });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: e.message });
+  }
+});
+
+//Get a list of friends
+app.get('/user/friends/list', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user;
+  try {
+    const friendList = await getFriends(userId); 
+    return res.status(200).json({ friendList: friendList});
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving friend list" });
+  }
+});
+
 
 
 // Auth middleware
