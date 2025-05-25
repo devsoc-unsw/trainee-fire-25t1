@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useParams } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Camera } from "lucide-react";
+import { Camera, Loader2, UserCheck, UserPlus } from "lucide-react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { getUserReviews } from "@/api/reviews";
 import { getUserInfo } from "@/api/user";
 import { Review, User } from "@/types";
+import { useFollow } from "@/hooks/useFollow";
 
 
 
@@ -20,17 +21,47 @@ export default function ProfilePage() {
   const username = params.username;
   const [user, setUser] = useState<User>()
   const [reviews, setReviews] = useState<Array<Review>>([])
+  const [isFollowing, setIsFollowing] = useState<Boolean>(false)
+  const {
+    followUser,
+    unfollowUser,
+    checkFollowStatus,
+    followLoading,
+  } = useFollow()
 
   useEffect(() => {
     getUserInfo(username)
     .then(setUser)
     .then(() => getUserReviews(username!))
     .then(setReviews)
+    .then(() => checkFollowStatus(username!))
+    .then(setIsFollowing)
   }, []);
 
-  console.log(user)
+  const handleFollowClick = async () => {
+    if (!user) return
 
-  console.log(reviews)
+    let success = false
+    let action = ""
+
+    if (isFollowing) {
+      success = await unfollowUser(user.username)
+      setIsFollowing(!isFollowing)
+      action = success ? "Unfollowed" : "Failed to unfollow"
+    } else {
+      success = await followUser(user.username)
+      setIsFollowing(!isFollowing)
+      action = success ? "Following" : "Failed to follow"
+    }
+
+    if (success) {
+      console.log({
+        title: action,
+        description: isFollowing ? `You unfollowed ${user.username}` : `You are now following ${user.username}`,
+      })
+    }
+  }
+
   const [profileImage, setProfileImage] = useState("/placeholder.svg?height=80&width=80")
   return (
     <div className="min-h-screen bg-background">
@@ -79,13 +110,39 @@ export default function ProfilePage() {
                     </DialogContent>
                   </Dialog>
                 }
+
               </div>
               <div>
                 <h1 className="text-xl font-semibold">@{username}</h1>
-                <p className="mt-1">{reviews.length} albums rated • {user?.friends.length} following</p>
+                <p className="mt-1">{reviews.length} albums rated</p>
               </div>
             </div>
-            <AlbumSearchModal />
+            {user?.loggedIn && <AlbumSearchModal/>}
+            {
+                  !user?.loggedIn &&
+                  <div className="flex items-center gap-2">
+                  <Button
+                    variant={isFollowing ? "outline" : "default"}
+                    onClick={handleFollowClick}
+                    disabled={followLoading}
+                    className="gap-2"
+                  >
+                      {followLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isFollowing ? (
+                        <>
+                          <UserCheck className="h-4 w-4" />
+                          Following
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4" />
+                          Follow
+                        </>
+                      )}
+                  </Button>
+                </div>
+                }
           </div>
 
           {/* <div>

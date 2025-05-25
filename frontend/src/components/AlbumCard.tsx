@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { StarIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { User } from "@/types"
 
 interface AlbumCardProps {
   title: string
@@ -39,7 +40,7 @@ export function AlbumCard({ title, artist, cover, rating, reviewer }: AlbumCardP
 
         {reviewer && (
           <div className="flex items-center mt-2 pt-2 border-t border-border/50">
-            {reviewer}
+            @{reviewer}
           </div>
         )}
       </CardContent>

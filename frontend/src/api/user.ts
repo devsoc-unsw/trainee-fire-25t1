@@ -11,3 +11,16 @@ export const getUserInfo = async (userId?: string) => {
   const res = await axios.get(`/user/${id}`);
   return res.data;
 };
+
+
+/**
+ * GET /user/search?query=string
+ * Searches for users whose usernames (or display names) match the query.
+ * @param {string} query - The search string
+ */
+export const searchUsers = async (query: string) => {
+  const res = await axios.get(`/user/search`, {
+    params: { query }
+  });
+  return res.data.users;
+};
