@@ -1,60 +1,64 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AlbumCard } from "@/components/AlbumCard"
-import { AlbumSearchModal } from "@/components/AlbumSearchModal"
-import { Plus, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getUserInfo } from "@/api/user"
+import { useEffect } from "react"
+import { useState } from "react"
+import { Review, User } from "@/types"
+import { getFriendsReviews } from "@/api/reviews"
+import { getFriends } from "@/api/friends"
 
 export default function HomePage() {
+  const [user, setUser] = useState<User>()
+  const [reviews, setReviews] = useState<Array<Review>>([])
+  const [friends, setFriends] = useState<Array<string>>([])
+
+  useEffect(() => {
+    getUserInfo()
+    .then(setUser)
+    .then(() => getFriendsReviews())
+    .then(setReviews)
+    .then(() => getFriends())
+    .then(setFriends)
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
         <div className="grid gap-6">
+          <div className="flex items-center justify-between align-center">
+            <h1 className="text-xl font-semibold">Welcome to Jukeboxd {user ? user.username : ""}</h1>
+          </div>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Friends' Recent Ratings</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <AlbumCard
-              title="The Dark Side of the Moon"
-              artist="Pink Floyd"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={5}
-            />
-            <AlbumCard
-              title="To Pimp a Butterfly"
-              artist="Kendrick Lamar"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={4.5}
-            />
-            <AlbumCard
-              title="In Rainbows"
-              artist="Radiohead"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={4}
-            />
-            <AlbumCard title="Blonde" artist="Frank Ocean" cover="/placeholder.svg?height=150&width=150" rating={4.5} />
-            <AlbumCard title="Currents" artist="Tame Impala" cover="/placeholder.svg?height=150&width=150" rating={4} />
-            <AlbumCard
-              title="OK Computer"
-              artist="Radiohead"
-              cover="/placeholder.svg?height=150&width=150"
-              rating={5}
-            />
+            {
+              reviews.map(review =>
+                <AlbumCard
+                  title={review.album.name}
+                  artist={review.album.artist}
+                  cover={review.album.coverImage ? review.album.coverImage : ""}
+                  rating={Number(review.rating)}
+                  reviewer={review.ownerId}
+                />
+              )
+            }
           </div>
 
           <h2 className="text-xl font-semibold mt-6">Friends</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <FriendCard username="alex_music" fullName="Alex Johnson" image="/placeholder.svg?height=80&width=80" />
-            <FriendCard
-              username="music_lover92"
-              fullName="Sarah Williams"
-              image="/placeholder.svg?height=80&width=80"
-            />
-            <FriendCard username="indie_head" fullName="Chris Taylor" image="/placeholder.svg?height=80&width=80" />
-            <FriendCard username="jazz_fan" fullName="Jordan Davis" image="/placeholder.svg?height=80&width=80" />
-            <FriendCard username="rock_enthusiast" fullName="Emma Wilson" image="/placeholder.svg?height=80&width=80" />
-            <FriendCard username="vinyl_collector" fullName="Mike Chen" image="/placeholder.svg?height=80&width=80" />
+            {
+              friends.map((friend) =>
+                <FriendCard
+                  username={friend}
+                  image="/placeholder.svg?height=80&width=80"
+                />
+              )
+            }
           </div>
         </div>
       </div>
@@ -62,19 +66,15 @@ export default function HomePage() {
   )
 }
 
-function FriendCard({ username, fullName, image }: { username: string; fullName: string; image: string }) {
+function FriendCard({ username, image }: { username: string; image: string }) {
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border-transparent">
       <CardContent className="p-4">
         <div className="flex flex-col items-center text-center space-y-3">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={image || "/placeholder.svg"} alt={fullName} />
+            <AvatarImage src={image || "/placeholder.svg"} alt={username} />
             <AvatarFallback>
-              {fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()}
+              {username.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
 

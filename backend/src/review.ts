@@ -25,18 +25,30 @@ export async function addReview(userId: string, review: Review ) {
 
 }
 
-
-
-export async function getReviews(userId: string ) {
+export async function getFriendsReviews(userId: string ) {
     const foundUser = await usersCollection.findOne( {username: userId});
     if (!foundUser) {
         throw new Error ("No user with this userId");
     }
 
     // Get a list of reviews by friends
-    const reviewList = await reviewsCollection.find( {ownerId: {$in: foundUser.friends}});
+    const reviewList = await reviewsCollection
+        .find( {ownerId: {$in: foundUser.friends}})
+        .sort({ creationDate: -1 }) // Most recent first
+        .limit(10)
+        .toArray()
 
+    return reviewList;
+}
 
-    // The last 10 element should be the most 10 recent since we append to the end as more review is added.
-    return reviewList.slice(-10);
+export async function getMyReviews(userId: string ) {
+    const foundUser = await usersCollection.findOne( {username: userId});
+    if (!foundUser) {
+        throw new Error ("No user with this userId");
+    }
+
+    // Get a list of reviews by friends
+    const reviewList = await reviewsCollection.find( {ownerId: userId}).sort({ creationDate: -1 }).toArray() // Most recent first.toArray();
+
+    return reviewList;
 }

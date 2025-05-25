@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
-import { addReview, getReviews } from './review';
-import { registerUser, authenticateUser } from './user';
+import { addReview, getFriendsReviews, getMyReviews } from './review';
+import { registerUser, authenticateUser, getUserInfo } from './user';
 import { Review, User, Album } from './types';
 
 import dotenv from 'dotenv';
@@ -20,7 +20,8 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { register } from 'module';
 import { ObjectId } from 'mongodb';
-import { addFriend, getFriends } from './friends';
+import { addFriend, checkIfFollowing, getFriends, removeFriend } from './friends';
+import { usersCollection } from './dbInterface';
 const swaggerDocument = YAML.load('openapi.yaml');
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -91,6 +92,7 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
     album: {
       name: req.body.album,
       artist: req.body.artist,
+      coverImage: req.body.coverImage
     },
     rating: req.body.rating,
     creationDate: Date.now()
@@ -105,11 +107,11 @@ app.post('/review/add', verifyJWT, async (req: Request, res: Response): Promise<
 });
 
 
-app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
-  const userId = req.params.user as string;
+app.get('/friends/reviews/', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user as string;
   try {
     // retrieve 10 most recent reviews left by friends of the user.
-    const reviews = await getReviews(userId)
+    const reviews = await getFriendsReviews(userId)
     return res.status(200).json({ reviews: reviews });
   }
   catch (e: any) {
@@ -117,18 +119,109 @@ app.get('users/reviews/:user', verifyJWT, async (req: Request, res: Response): P
   }
 });
 
+app.get('/user/reviews/:user', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = req.params.user as string;
+  try {
+    const reviews = await getMyReviews(userId)
+    return res.status(200).json({ reviews: reviews });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: e.message });
+  }
+});
+
+app.get('/user/search', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const searchQuery = req.query.query as string;
+
+  if (!searchQuery || searchQuery.trim() === '') {
+    return res.status(400).json({ error: 'Search query is required' });
+  }
+
+  try {
+    const users = await usersCollection
+      .find({ username: { $regex: searchQuery, $options: 'i' } }) // case-insensitive partial match
+      .project({ username: 1, _id: 1 }) // return only needed fields
+      .limit(5)
+      .toArray();
+
+    return res.status(200).json({ users });
+  } catch (e: any) {
+    return res.status(500).json({ error: 'Failed to search users' });
+  }
+});
+
+app.get('/user/friends/isfollowing/:user', verifyJWT, async (req: Request, res: Response): Promise<any>  => {
+  const currentUserId = res.locals.user;
+  const targetUserId = req.params.user;
+
+  try {
+    const isFollowed = await checkIfFollowing(currentUserId, targetUserId);
+    return res.status(200).json({ isFollowed });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Error checking follow status' });
+  }
+});
+
+//Get a list of friends
+app.get('/user/friends/', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user;
+  try {
+    const friendList = await getFriends(userId);
+    return res.status(200).json({ friendList: friendList });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving friend list" });
+  }
+});
+
+
+
+app.get("/user/:user", verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const loggedIn = res.locals.user as string;
+  const userId = req.params.user !== undefined ? (req.params.user as string) : loggedIn;
+  try {
+    const user = await getUserInfo(userId)
+    return res.status(200).json({
+      username: user.username,
+      loggedIn: userId === loggedIn,
+      topAlbums: user.friends,
+      reviews: user.reviews,
+      friends: user.friends,
+    });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving user" });
+  }
+})
+
+app.get("/user/", verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  const userId = res.locals.user as string;
+  try {
+    const user = await getUserInfo(userId)
+    return res.status(200).json({
+      username: user.username,
+      loggedIn: true,
+      topAlbums: user.friends,
+      reviews: user.reviews,
+      friends: user.friends,
+    });
+  }
+  catch (e: any) {
+    return res.status(403).json({ error: "Errors occur while retrieving reviews" });
+  }
+})
 
 
 //Add a friend (following someone, to be exact)
 app.post('/user/friends/add', verifyJWT, async (req: Request, res: Response): Promise<any> => {
   // Obtain userId or username from verifyJWT
   const userId = res.locals.user;
-  
 
-  // Do not see inputs route list (google doc); assume the 'friend' Id added is from req.body 
+
+  // Do not see inputs route list (google doc); assume the 'friend' Id added is from req.body
   const friendId = req.body.friendId;
   try {
-    addFriend(userId, friendId); 
+    addFriend(userId, friendId);
     return res.status(200).json({
          message: "Friend added successfully"
     });
@@ -138,15 +231,23 @@ app.post('/user/friends/add', verifyJWT, async (req: Request, res: Response): Pr
   }
 });
 
-//Get a list of friends
-app.get('/user/friends/list', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+//Add a friend (following someone, to be exact)
+app.delete('/user/friends/remove/:id', verifyJWT, async (req: Request, res: Response): Promise<any> => {
+  // Obtain userId or username from verifyJWT
   const userId = res.locals.user;
+
+
+  // Do not see inputs route list (google doc); assume the 'friend' Id added is from req.body
+  const friendId = req.params.id;
   try {
-    const friendList = await getFriends(userId); 
-    return res.status(200).json({ friendList: friendList});
+    removeFriend(userId, friendId);
+    console.log('nice remove!')
+    return res.status(200).json({
+         message: "Friend removed successfully"
+    });
   }
   catch (e: any) {
-    return res.status(403).json({ error: "Errors occur while retrieving friend list" });
+    return res.status(403).json({ error: e.message });
   }
 });
 

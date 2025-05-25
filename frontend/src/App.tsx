@@ -7,11 +7,11 @@ import { Navbar } from "./components/Navbar.tsx"
 
 function App() {
   return <div className="size-full">
-    <Navbar/>
+
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/profile/:username" element={<ProfilePage />} />
+      <Route path="/" element={ <> <Navbar/> <HomePage/> </> } />
+      <Route path="/login" element={<LoginPage/>} />
+      <Route path="/profile/:username" element={<> <Navbar/> <ProfilePage/> </> } />
     </Routes>
   </div>
 }

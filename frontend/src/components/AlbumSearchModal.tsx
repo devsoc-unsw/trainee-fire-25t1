@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Search, Loader2, Plus } from "lucide-react"
 import { searchAlbums } from "@/lib/actions"
 import { RatingModal } from "./RatingModal"
+import { addReview } from "@/api/reviews"
 
 interface Album {
   name: string
@@ -65,7 +66,7 @@ export function AlbumSearchModal({ onSelectAlbum, trigger }: AlbumSearchModalPro
     if (!selectedAlbum) return
 
     // Here you would typically save the rating to your database
-    console.log("Rating submitted:", { album: selectedAlbum, rating, comment })
+    addReview(selectedAlbum.name, selectedAlbum.artist, selectedAlbum.image, rating)
 
     setIsRatingModalOpen(false)
     // Optionally close the search modal too
